@@ -12,13 +12,14 @@ class ProductListCreateView(generics.ListCreateAPIView):
     List all products or create a new product.
     Filtering by name, category, and price is supported.
     """
-    queryset = Product.objects.all()
+    queryset = Product.objects.all().order_by('-id')
     serializer_class = ProductSerializer
     pagination_class = ProductPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter,DjangoFilterBackend]
     search_fields = ['name', 'description']
     filterset_fields = ['category', 'price']
     ordering_fields = ['price', 'stock']
+    permission_classes = [permissions.IsAuthenticated] # Add this line
 
     def get_queryset(self):
         # Customers: only active products. Suppliers/Admin: all their products.
@@ -31,12 +32,16 @@ class ProductListCreateView(generics.ListCreateAPIView):
                 return queryset.filter(stock__gt=0)
         return queryset
 
+    def perform_create(self, serializer):
+        # Automatically set the supplier to the current authenticated user
+        serializer.save(supplier=self.request.user)
+
 class ProductRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     """
     Retrieve, update, or delete a product.
     Suppliers can only manage their own products.
     """
-    queryset = Product.objects.all()
+    queryset = Product.objects.all().order_by('-id')
     serializer_class = ProductSerializer
     permission_classes = [permissions.IsAuthenticated]
 
@@ -47,6 +52,6 @@ class ProductRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
             return queryset.filter(supplier=user)
         return queryset
 
-class CategoryListView(generics.ListAPIView):
-    queryset = Category.objects.all()
+class CategoryListCreateView(generics.ListCreateAPIView):
+    queryset = Category.objects.all().order_by('-id')
     serializer_class = CategorySerializer
