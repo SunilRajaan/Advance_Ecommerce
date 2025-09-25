@@ -1,7 +1,9 @@
+from .views import AdminDashboardView
 from django.urls import path
 from .views import RegisterView, LoginView, UserListView, UserDetailView, UserDeleteView, UserUpdateView
 
 urlpatterns = [
+    path('dashboard/', AdminDashboardView.as_view(), name='admin-dashboard'),
     path('register/', RegisterView.as_view(), name='register'),
     path('login/', LoginView.as_view(), name='login'),
     path('users/', UserListView.as_view(), name='user-list'),

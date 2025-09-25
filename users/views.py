@@ -1,24 +1,22 @@
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from .analytics import get_admin_dashboard_stats
 from rest_framework.generics import GenericAPIView, CreateAPIView, ListAPIView, RetrieveAPIView, UpdateAPIView, DestroyAPIView
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, permissions
 from rest_framework.authtoken.models import Token
 from .serializers import UserRegistrationSerializer, UserLoginSerializer, UserSerializer
 from .models import User
 
-# class RegisterView(APIView):
-#     def post(self, request):
-#         serializer = UserRegistrationSerializer(data=request.data)
-#         if serializer.is_valid():
-#             user = serializer.save()
-#             token, created = Token.objects.get_or_create(user=user)
-#             return Response({
-#                 'message': 'User registered successfully.',
-#                 'token': token.key,
-#                 'username': user.username,
-#                 'role': user.role
-#             }, status=status.HTTP_201_CREATED)
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+class AdminDashboardView(APIView):
+    """
+    Retrieve key analytics for the admin dashboard.
+    """
+    permission_classes = [permissions.IsAdminUser]
 
+    def get(self, request):
+        stats = get_admin_dashboard_stats()
+        return Response(stats)
 class UserListView(ListAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer

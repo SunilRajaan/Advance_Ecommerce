@@ -1,8 +1,8 @@
 from rest_framework import generics, filters, permissions, serializers
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.pagination import PageNumberPagination
-from .models import Order
-from .serializers import OrderSerializer
+from .models import Order, OrderItem
+from .serializers import OrderSerializer, OrderItemSerializer
 
 class OrderPagination(PageNumberPagination):
     page_size = 10
@@ -57,3 +57,13 @@ class OrderRetrieveUpdateView(generics.RetrieveUpdateAPIView):
         if user.role not in ("admin", "delivery"):
             raise serializers.ValidationError("You do not have permission to update orders")
         serializer.save()
+
+class OrderItemListView(generics.ListAPIView):
+    serializer_class = OrderItemSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    def get_queryset(self):
+        order_pk = self.kwargs['pk']
+        user = self.request.user
+        if user.role == "admin":
+            return OrderItem.objects.filter(order__pk=order_pk)
+        return OrderItem.objects.filter(order__pk=order_pk, order__customer=user)
