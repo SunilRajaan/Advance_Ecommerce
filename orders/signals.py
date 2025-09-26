@@ -2,6 +2,8 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from orders.models import Order
 from notifications.utils import notify_user
+from .utils import send_order_confirmation_email
+
 # from delivery.models import Delivery
 # from users.models import User
 
@@ -32,3 +34,14 @@ def send_order_confirmation_notification(sender, instance, created, **kwargs):
 def send_order_confirmation_notification(sender, instance, created, **kwargs):
     if created:
         notify_user(instance.customer, f"Your order #{instance.id} has been placed.", notif_type="order")
+
+
+@receiver(post_save, sender=Order)
+def handle_order_creation_actions(sender, instance, created, **kwargs):
+    if created:
+        # 1. Internal Notification (Requirement 9)
+        notify_user(instance.customer, f"Your order #{instance.id} has been placed.", notif_type="order")
+
+        # 2. Email Confirmation (Requirement 8 - The FIX)
+        # Assuming you've created a .utils file and imported the function
+        send_order_confirmation_email(instance) 

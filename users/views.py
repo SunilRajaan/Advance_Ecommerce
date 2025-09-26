@@ -17,6 +17,7 @@ class AdminDashboardView(APIView):
     def get(self, request):
         stats = get_admin_dashboard_stats()
         return Response(stats)
+    
 class UserListView(ListAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer

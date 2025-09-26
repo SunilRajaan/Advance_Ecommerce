@@ -1,11 +1,30 @@
 from rest_framework import generics, filters, permissions
+from rest_framework.views import APIView
+from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.pagination import PageNumberPagination
 from .models import Product, Category
 from .serializers import ProductSerializer, CategorySerializer
+from .analytics import get_supplier_dashboard_stats
 
 class ProductPagination(PageNumberPagination):
     page_size = 10
+
+
+class SupplierDashboardView(APIView):
+    """
+    Retrieve key analytics for the supplier dashboard.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        if user.role != 'supplier':
+            return Response({"detail": "Access denied. Must be a supplier."}, status=403)
+            
+        stats = get_supplier_dashboard_stats(user)
+        return Response(stats)
+
 
 class ProductListCreateView(generics.ListCreateAPIView):
     """
