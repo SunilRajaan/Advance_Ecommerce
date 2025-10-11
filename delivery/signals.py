@@ -2,6 +2,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from delivery.models import Delivery
 from notifications.utils import notify_user
+from orders.utils import send_delivery_status_email
 
 @receiver(post_save, sender=Delivery)
 def delivery_assignment_notification(sender, instance, created, **kwargs):
@@ -23,3 +24,9 @@ def delivery_status_notification(sender, instance, created, **kwargs):
     else:
         if instance.status in ['delivered']:
             notify_user(instance.order.customer, f"Your order #{instance.order.id} has been delivered.", notif_type="delivery")
+
+@receiver(post_save, sender=Delivery)
+def send_delivery_email_updates(sender, instance, **kwargs):
+    """Send email when delivery status changes to shipped/delivered"""
+    if instance.status in ['shipped', 'delivered']:
+        send_delivery_status_email(instance)
