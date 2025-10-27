@@ -153,7 +153,18 @@ REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
+# Email Configuration
+DEFAULT_FROM_EMAIL = 'noreply@ecommerce.com'
+# For development - emails print to console
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# For production, use:
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'your-smtp-host.com'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = 'your-email@domain.com'
+# EMAIL_HOST_PASSWORD = 'your-password'
 
 SPECTACULAR_SETTINGS = {
     'TITLE': 'ECommerce API',

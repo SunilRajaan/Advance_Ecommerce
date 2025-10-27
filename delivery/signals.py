@@ -5,28 +5,31 @@ from notifications.utils import notify_user
 from orders.utils import send_delivery_status_email
 
 @receiver(post_save, sender=Delivery)
-def delivery_assignment_notification(sender, instance, created, **kwargs):
+def handle_delivery_notifications(sender, instance, created, **kwargs):
+    """
+    Consolidated signal handler for delivery notifications:
+    - Notifies delivery person on assignment
+    - Notifies customer on status changes
+    - Sends email updates
+    """
     if created:
-        notify_user(instance.delivery_person, f"New delivery assigned: Order #{instance.order.id}", notif_type="delivery")
-
-    if not created:
-        # Notify the customer when the delivery status changes to a key milestone.
-        if instance.status in ['shipped', 'delivered']:
-            notify_user(instance.order.customer, f"Your order #{instance.order.id} is now {instance.get_status_display()}.", notif_type="delivery")
-
-@receiver(post_save, sender=Delivery)
-def delivery_status_notification(sender, instance, created, **kwargs):
-    # This part handles the initial notification to the delivery person.
-    if created:
-        notify_user(instance.delivery_person, f"New delivery assigned: Order #{instance.order.id}", notif_type="delivery")
-
-    # This is the new part that notifies the customer.
+        # Notify delivery person about new assignment
+        notify_user(
+            instance.delivery_person, 
+            f"New delivery assigned: Order #{instance.order.id}", 
+            notif_type="delivery"
+        )
+    
     else:
-        if instance.status in ['delivered']:
-            notify_user(instance.order.customer, f"Your order #{instance.order.id} has been delivered.", notif_type="delivery")
-
-@receiver(post_save, sender=Delivery)
-def send_delivery_email_updates(sender, instance, **kwargs):
-    """Send email when delivery status changes to shipped/delivered"""
-    if instance.status in ['shipped', 'delivered']:
-        send_delivery_status_email(instance)
+        # Notify customer about important status changes
+        if instance.status in ['picked', 'in_transit', 'delivered']:
+            status_display = instance.get_status_display()
+            notify_user(
+                instance.order.customer,
+                f"Your order #{instance.order.id} is now {status_display}.",
+                notif_type="delivery"
+            )
+        
+        # Send email for major status updates
+        if instance.status in ['shipped', 'delivered']:
+            send_delivery_status_email(instance)

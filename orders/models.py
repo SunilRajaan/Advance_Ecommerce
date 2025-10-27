@@ -18,6 +18,20 @@ class Order(models.Model):
 
     def __str__(self):
         return f"Order #{self.id} ({self.status})"
+    
+    # Add this method to Order model for automatic delivery creation
+    def save(self, *args, **kwargs):
+        """
+        Override save to trigger delivery creation when status changes to confirmed
+        """
+        if self.pk:  # Only for existing instances
+            old_status = Order.objects.get(pk=self.pk).status
+            if old_status != 'confirmed' and self.status == 'confirmed':
+                # This will trigger the signal to create delivery
+                super().save(*args, **kwargs)
+                return
+        
+        super().save(*args, **kwargs)
 
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')

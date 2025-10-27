@@ -1,4 +1,5 @@
-from rest_framework import generics, filters, permissions, serializers
+from rest_framework import generics, filters, permissions, serializers, status
+from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.pagination import PageNumberPagination
 from .models import Order, OrderItem
@@ -10,7 +11,7 @@ class OrderPagination(PageNumberPagination):
 class OrderListCreateView(generics.ListCreateAPIView):
     """
     List all orders (Admin) or create order (Customer).
-    Admin can filter by status or customer.
+    ONLY CUSTOMERS can create orders.
     """
     queryset = Order.objects.all().order_by('-id')
     serializer_class = OrderSerializer
@@ -30,6 +31,18 @@ class OrderListCreateView(generics.ListCreateAPIView):
             elif user.role == "admin":
                 return queryset
         return Order.objects.none()
+
+    def create(self, request, *args, **kwargs):
+        # Check if user is customer before allowing order creation
+        if request.user.role != 'customer':
+            return Response(
+                {
+                    "detail": "Access denied. Only customers can place orders. "
+                             "Suppliers, admin, and delivery personnel cannot order products."
+                },
+                status=status.HTTP_403_FORBIDDEN
+            )
+        return super().create(request, *args, **kwargs)
 
     def perform_create(self, serializer):
         serializer.save(customer=self.request.user)
